@@ -1,0 +1,104 @@
+id;name;clothing_type;season;colour;material
+5b80a03e-707c-4204-8f4c-abe0ff161ce1;blue flower dress;dress;summer;blue;polyester
+ff9b2122-b2c2-48fa-8737-b7ceb33aee3f;short purpole dress;dress;all;purple;polyester
+7872aa91-7bdf-4b8f-946a-5e75d80fdb8e;blue evening dress;dress;all;blue;polyester
+70e9c459-c85a-4a84-a860-fac3bf4c39aa;red short evening dress;dress;summer;red;polyester
+abee565c-ddae-41ab-8bdf-6ab29dd1a338;red long evening dress;dress;all;red;polyester
+d4b93581-5dbc-4f74-8eaa-75ae223043a0;black mini skirt;skirt;summer;black;polyester
+c05b3cdf-f39d-44e4-b656-03867929b3d4;red and cream jumpsuit;jumpsuit;all;red and cream;polyester
+65cbb673-1571-468c-89f4-1d7d6a3b6704;black and white Ted Baker jumpsuit;jumpsuit;all;black and white;polyester
+8f753611-b631-4205-93c5-a50beb595fa9;white V-neck business top;top;summer;white;polyester
+94de7ff9-8315-425c-9fb9-fd10f9db04bc;white top gold clasp;top;summer;white;polyester
+2489747b-f166-433b-8391-f3cf4d188658;white strappy formal top;top;summer;white;polyester
+e6d26233-9711-4ce4-8b74-a1aceb40af4d;white blouse;blouse;all;white;cotton
+c49837b1-cf5c-48db-a7ab-2bfc9f1245ac;black formal trousers;trousers;all;black;polyester
+6bcf9b34-c262-4fc5-b84b-bc7537aa8f83;cream zip jumper;jumper;transition;cream;wool
+0fcb41ce-c5a2-41fb-ba99-4d3de8250cea;black top gold chain;top;winter / transition;black;wool
+a48b4d45-9a0b-41da-8123-335c581d808c;grey top gold chain;top;winter / transition;grey;wool
+5b1e8d29-046b-4a67-8bfc-a30f46112d51;thin grey rollneck;jumper;winter / transition;grey;kashmir
+ec91bea3-23b0-4b0f-b4d0-0d54e8a65622;thin black rollneck;jumper;winter / transition;black;cotton
+ededb94a-9c1f-4466-9c7f-0b86bf5e2c5a;thin camel rollneck;jumper;winter / transition;camel;cotton
+93ffadbc-23ab-4c40-a536-d0598db1fafd;thin white rollneck;jumper;winter / transition;white;cotton
+1f93c29d-506b-4d40-b32a-b593445e0926;black short sleeved mockneck jumper;jumper;transition;black;jumper
+bd3bb1a1-a8e0-4f0d-8159-8fa699dd70a7;thin emerald jumper;jumper;winter;emerald;wool
+345b8e7b-fc8a-4fd8-b3ab-f39a3c7431e2;blue and white kashmir jumper;jumper;winter;blue and white;kashmir
+2b11d29e-ccf6-4fad-88a0-ab10bcaf42e9;burgundy kashmir jumper;jumper;winter;burgundy;kashmir
+21755677-5d49-4229-b1f3-a89297837b9a;turkois jumper;jumper;winter;turkois;wool
+ed85c068-596d-4066-a9dd-b92c044197a4;pint off the shoulder jumper;jumper;winter;pink;wool
+4dfcf229-123b-4391-8e57-2f1e0c489901;wine off the shoulder jumper;jumper;winter;wine;wool
+615ee15b-c9fe-41ed-a7a0-10f522bae30c;stone cardigan;cardigan;transition;stone;wool
+7ff57e2c-24c8-473e-bdfc-2e5c420eae0d;cream hole-y cardigan;cardigan;transition;cream;wool
+a1d0734f-d017-48aa-808c-6535fbc9c0f8;camel funnel neck jumper;jumper;winter;camel;wool
+4cffbbc6-c015-4d7d-ad83-af02eae40791;grey rollneck jumper;jumper;winter;grey;wool
+b3be5852-4a17-4350-9730-22c8f47f0f71;dark grey v-nick jumper;jumper;winter;grey;wool
+221279c0-e20c-4225-be02-2eeabe4d5f05;light grey v-neck jumper;jumper;winter;grey;wool
+a3a3465c-06c7-4d04-883b-5f24dca8b9f0;thick black rollneck;jumper;winter;black;wool
+ce235dda-668e-4cca-8446-a2d2a677a20b;grey nordic  jumper;jumper;winter;grey;wool
+722bb369-3f61-4bea-b6d0-5599e1f4707a;stone mockneck jumper;jumper;winter;stone;wool
+9e7104ba-1100-451b-9eba-432a25e42735;stone crewneck jumper;jumper;winter;stone;wool
+b561773f-d1dc-4486-8926-c71142902a0f;cream crewneck jumper;jumper;winter;cream;wool
+16e9ae9e-a3ba-4ee2-82e3-b5275a06cdce;black and whit debardeur;debardeur;winter / transition;black and white;wool
+ec1c0559-3873-4276-8a69-4a81038cffb3;blue UCL jumper;jumper;all;blue;cotton
+a1bb6185-4cbc-446b-bc14-a9a76807f565;oversized white shirt;shirt;spring / summer;white;linen
+37cb7fec-45f5-4373-8080-54f7454be735;oversized blue shirt;shirt;spring / summer;blue;linen
+b0d42e29-4094-4a74-897f-884d3bd79992;short sleeved blue blouse;blouse;spring / summer;blue;cotton
+4b38c83c-8a19-4071-9338-7abc7379cf8e;emerald blouse;blouse;spring / summer / autumn;emerald;polyester
+ced06e5a-85d4-4084-93ca-3b7070ceb7dd;black and white pinstriped;trousers;all;black and white;suit
+77fd29b6-9e69-4352-a2fa-9a9d7d7e4b4b;palm themed playsuit;playsuit;summer;green;cotton
+cd275a4f-7d41-4a5e-b57d-5438779d6e85;grey and white checkered playsuit;playsuit;summer;grey and white;cotton
+f1f44f10-bd34-426f-a288-43b33c5d35fb;black and white striped jumpsuit;jumpsuit;summer;black and white;cotton
+79a8b3c8-dcc5-4a78-965f-0314cec2cd09;navy azetec mini dress;dress;summer;navy;cotton
+db36d7f1-38fd-4dd3-bf38-2b361818b69f;navy playsuit;playsuit;summer;navy;cotton
+ff304493-a4c4-414d-9eb1-d0b73e6e6f2c;dark blue maxi skirt;skirt;summer;blue;viscose
+5b97ce28-95e9-4b6c-8512-2f8de2685f31;black backless string top;top;summer;black;cotton
+a3983adb-1a39-4bba-9252-642088823848;red halterneck;top;summer;red;cotton
+330c9e1e-4b88-40f4-b6fb-436dfa82b886;blue backless string top;top;summer;blue;cotton
+269b562c-b6a5-49f1-ba2e-36221ad29a4a;emerald long sleeved top;top;spring / summer / autumn;emerald;cotton
+d5d250f2-588f-405d-9c64-2ce31f9c124b;white lace chonky straps;top;summer;white;cotton
+3e72f8ad-b552-41d1-8282-bea2ab847a2f;khaki lace insert spaghetti;top;summer;khaki;cotton
+dbf8534f-f06b-49ac-8da6-e1f95ed16635;black lace insert spaghetti;top;summer;black;cotton
+2908e9a8-2258-44c5-b78a-33a3fa6e4dc3;green flower blouse;blouse;summer;green;polyester
+59beb040-2568-4f19-a968-fe73dbc72ea0;cream pattern scarf tshirt;tshirt;summer;cream;jersey
+6dc262bb-655d-4477-9f53-36d975b2ee21;black off the shoulder blouse;blouse;summer;black;polyester
+d686b64b-ad51-4d8b-8bb3-c690f5645b03;black tshirt CK;tshirt;summer;black;cotton
+ea6e9d8b-ee71-4051-92ba-8f85c6492856;black halterneck top;top;summer;black;polyester
+57f37212-62e2-4899-a6cd-78cdeee1425f;black tshirt;tshirt;summer;black;cotton
+a7831128-3818-43f3-8854-47dc4b2e9e85;black bodysuit;bodysuit;summer;black;cotton
+8b2d9e19-f39b-43cc-b51d-3e01ae912168;green embroided strappy top;top;summer;green;cotton
+ced0793a-03a0-4072-a0fb-3bec8fbdba1b;white v-neck tshirt;tshirt;summer;white;cotton
+f00ce859-fdea-4a13-bb50-bc9a274427dd;black tanktop;tshirt;summer;black;cotton
+972a6e0d-9076-430d-a2ef-eec484e972c5;blue tanktop;tshirt;summer;blue;cotton
+761fafc7-4adf-4a92-92f0-09dd8ba0b16b;khaki  bodysuit;bodysuit;summer;green;cotton
+c5e2a3ad-4ac5-410d-9592-3c1fcf0fe354;pale blue bodysuit;bodysuit;summer;blue;cotton
+fc9390fc-da96-47dd-b3c6-5198c912fa07;blue tshirt;tshirt;summer;blue;cotton
+48908394-5bcd-450d-97b4-581688a6a156;white-grey checkered top;top;spring / summer / autumn;white-grey;cotton
+c531f9a7-9bad-4137-a173-3451058e6938;brwon tshirt;tshirt;summer;brown;cotton
+a75e9aa3-6e2f-4f62-b2a6-941d023cc90d;pale blue tshirt;tshirt;summer;blue;cotton
+c1ce298a-2d7a-4d99-bd92-5187759819d1;white scrunch tshirt;tshirt;summer;white;cotton
+3e2c3369-5393-410c-9fdd-e2b6c0159b26;navy sleeveless button down;blouse;summer;navy;viscose
+1722c363-a179-41c5-8391-2869d6dd6109;white lace spage-hetti top;top;summer;white;lace
+b92a75f4-182c-42e0-8780-64769cac48c6;black lace spaghetti top;top;summer;black;lace
+9e812491-3d78-4bc4-82f6-3ac39762e3ff;blue lace spaghetti top;top;summer;navy;lace
+8046059e-9bee-4b15-b0e2-a2b6dd332a96;red spaghetti top;top;summer;burgundy;cotton
+85aab27c-07ee-429c-8f79-8ed4d573c0d7;black spaghetti top;top;summer;black;cotton
+d5803799-5c54-446d-975d-e85db9ff14ac;blue spaghetti top;top;summer;blue;cotton
+75177e35-045f-409c-b9a9-6c4fddf7f44f;light blue coiderois;trousers;transition;blue;coiderois
+cb749b63-8cac-465a-8441-73d5f85a5919;black white striped trousers;trousers;summer;black and white;polyester
+daf1b100-7141-4af0-be39-69f94be545cb;black white striped shorts;shorts;summer;black and white;cotton
+ff448488-bbd8-4157-8eef-75208198b239;blue and white striped shorts;shorts;summer;blue and white;cotton
+cfc48dd5-a85d-4e17-9f89-a90c10314cbf;blue dress;dress;summer;blue;cotton
+864206c0-8706-4423-9200-050dd35a50f5;black and white suit dress;dress;summer;black and white;suit
+23d46522-91a6-43ba-9945-a515e3963d36;black flares;trousers;all;black;jeans
+4d7c4953-b151-4a46-82c6-b9becbb2ae7c;black pinstripe suit trousers;trousers;spring / summer / autumn;black;suit
+69e6343b-58de-47fa-a621-384e6e0f852f;grey aladin trousers;trousers;summer;grey;cotton
+d8be8e09-6c82-4838-a868-86968a879397;grey jumper dress;dress;winter;grey;wool
+d83ef362-44bf-4ec3-98ec-efcbd79b8592;red jumper dress;dress;winter;burgundy;wool
+ad12b30d-d124-4463-a707-17864db3c485;blue tie on trousers;trousers;summer;blue;cotton
+cc2bc6c7-82a1-47d9-a91a-8f2180138b87;black ribbed trousers;trousers;spring / summer / autumn;black;cotton
+30c7a019-3c8b-4b31-a0da-f234f3f16cca;beige trousers;trousers;all;beige;cotton
+7a609f0b-390d-436d-aad7-25167000c8fa;grey trousers checkered;trousers;all;grey;cotton
+57eb3b67-8588-4f4e-b9a1-10b26a79c9ce;grey jeans;trousers;all;grey;jeans
+f85fcfbb-5434-4907-82c1-d02253ec1e2a;dark blue jeans;trousers;all;jeans;jeans
+b120f86d-7da2-4313-915c-eeb6fb7206a9;light blue jeans;trousers;all;jeans;jeans
+390b445b-5966-4134-a886-0f81b222e09c;light grey suit trousers;trousers;all;grey;suit
+fa248826-d6b8-4f4f-8914-ba2f633547c3;Babe's turquoise coiderois;trousers;winter;turquoise;coiderois
