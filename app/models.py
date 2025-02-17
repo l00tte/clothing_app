@@ -3,7 +3,10 @@ import pandas as pd
 import uuid
 from typing import List 
 from datetime import datetime
-@dataclass
+import numpy as np
+
+@dataclass 
+
 class Clothing_Item:
     id: str
     name: str
