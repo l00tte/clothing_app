@@ -456,13 +456,13 @@ else:
         with st.expander(f"👕 {outfit_name}"):
             st.write(f"**Clothing Items:** {row['clothing_items']}")
             
-            if st.button(f"Select this Outfit for today"):
-                # Create an OutfitSelection object with the name and current date
-                outfit = OutfitSelection(name=outfit_name, date_selected=None)
+           # if st.button(f"Select this Outfit for today"):
+           #     # Create an OutfitSelection object with the name and current date
+            #    outfit = OutfitSelection(name=outfit_name, date_selected=None)
                 
                 # Log the outfit selection
-                log_outfit_selection(outfit)
-                st.success(f"Outfit '{outfit_name}' selected for today!")
+            #    log_outfit_selection(outfit)
+             #   st.success(f"Outfit '{outfit_name}' selected for today!")
 
 
 
