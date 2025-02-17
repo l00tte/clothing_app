@@ -339,16 +339,6 @@ if st.button("Get outfit recommendations for the next 5 days"):
 
                     with st.expander(f"👕 {row['name']} ({clean_weather}, {clean_occasion})"):
                         st.write(f"**Clothing Items:** {row['clothing_items']}")
-                        #if st.button(f"Select for {formatted_date}"):
-                        #        outfit = OutfitSelection(name=outfit_name, date_selected=None)
-                                
-                                # Log the outfit selection
-                        #        log_outfit_selection(outfit)
-                        #        st.success(f"Outfit '{outfit_name}' selected for today!")
-
-                        
-
-
 
 #------------------------
 #------------------------
@@ -507,122 +497,128 @@ if st.button("Show Outfit metrics"):
 #------------------------
 st.markdown("### Manage Items and Outfits")
 #------------------------
+if "df" not in st.session_state:
+    # Initialize the dataframe for clothing items if it doesn't exist yet
+    if os.path.exists(csv_file_path):
+        st.session_state.df = pd.read_csv(csv_file_path, sep=";")
+    else:
+        st.session_state.df = pd.DataFrame(columns=["id", "name", "clothing_type", "season", "colour", "material"])
+
+if "outfits_df" not in st.session_state:
+    # Initialize the dataframe for outfits if it doesn't exist yet
+    if os.path.exists(csv_file_path_outfits):
+        st.session_state.outfits_df = pd.read_csv(csv_file_path_outfits, sep=";")
+    else:
+        st.session_state.outfits_df = pd.DataFrame(columns=["name", "weather", "occasion", "clothing_items"])
 
 
-if st.button("Create a new Clothing Item"):
-    st.write("### Create a new clothing item")
+#------------------------
+# Create a new clothing item (with "Save" button)
+#------------------------
+st.write("#### Create a new clothing item")
 
-    name = st.text_input("Clothing item name:")
-    type = st.text_input("Type:")
-    season = st.text_input("Season:")
-    colour = st.text_input("Colour:")
-    material = st.text_input("Material:")
+name = st.text_input("Clothing item name:")
+type = st.text_input("Type:")
+season = st.text_input("Season:")
+colour = st.text_input("Colour:")
+material = st.text_input("Material:")
 
-    if st.button("Save new clothing item"):
-        new_item = Clothing_Item(
-            id=None,
-            name=name,
-            clothing_type=type,
-            season=season,
-            colour=colour,
-            material=material
-        )
-
-        new_item_dict = asdict(new_item)
-        new_item_df = pd.DataFrame([new_item_dict])
-        st.session_state.df = pd.concat([st.session_state.df, new_item_df], ignore_index=True)
-        st.session_state.df.to_csv(csv_file_path, sep=";", index=False)
-
-        st.success(f"New clothing item '{name}' added!")
-
-if st.button("Change or Delete Clothing Items"):
-
-
-    st.write("Delete or change clothing items here:")
-
-    # Handle the data editor with dynamic rows
-    edited_df = st.data_editor(st.session_state.df, num_rows="dynamic")
-    st.session_state.df = edited_df
-    st.session_state.df.to_csv(csv_file_path, sep=";", index=False)
-
-if st.button("Create new Outfit"):
-
-    # Ensure session state for outfits
-    if "outfits" not in st.session_state:
-        st.session_state.outfits = []
-
-    # Outfit creation UI
-    st.write("### Create a new Outfit")
-
-    # User input for outfit details
-    outfit_name = st.text_input("Outfit Name:", value="My New Outfit")
-    weather = st.multiselect("Weather:", ["<0", "0-12", "12-16", "16-20", "20-24", ">24"])
-    occasion = st.multiselect("Occasion:", ["Casual", "Formal", "Business", "Party"])
-
-    # Convert edited_df back to Clothing_Item objects
-    clothing_items_list = [
-        Clothing_Item(
-            id=row["id"],
-            name=row["name"],
-            clothing_type=row["clothing_type"],
-            season=row["season"],
-            colour=row["colour"],
-            material=row["material"]
-        )
-        for _, row in edited_df.iterrows()
-    ]
-
-    # Select clothing items
-    selected_items = st.multiselect(
-        "Select Clothing Items:",
-        options=[item.name for item in clothing_items_list],
-        default=[],
+if st.button("Save new clothing item") and name and type and season and colour and material:
+    new_item = Clothing_Item(
+        id=None,
+        name=name,
+        clothing_type=type,
+        season=season,
+        colour=colour,
+        material=material
     )
 
-    #def load_outfits():
-    #    if os.path.exists(csv_file_path_outfits):
-    #        return pd.read_csv(csv_file_path_outfits, sep=";")
-    #    else:
-    #        return pd.DataFrame(columns=["id", "name", "weather", "occasion","clothing_items"])
+    new_item_dict = asdict(new_item)
+    new_item_df = pd.DataFrame([new_item_dict])
+    st.session_state.df = pd.concat([st.session_state.df, new_item_df], ignore_index=True)
+    st.session_state.df.to_csv(csv_file_path, sep=";", index=False)
 
-    #if "outfits_df" not in st.session_state:
-    #    st.session_state.outfits_df = load_outfits()
+    st.success(f"New clothing item '{name}' added!")
 
+#------------------------
+# Change or Delete Clothing Items (with "Save" button)
+#------------------------
+st.write("#### Manage Clothing Items (Change/Delete)")
 
-    if st.button("Save Outfit"):
-        if os.path.exists(csv_file_path_outfits):
-            outfits_df = pd.read_csv(csv_file_path_outfits, sep=";")
-            st.session_state.outfits_df = outfits_df  
+# Handle the data editor with dynamic rows
+edited_df = st.data_editor(st.session_state.df, num_rows="dynamic")
+st.session_state.df = edited_df
 
-        else:
-            outfits_df = pd.DataFrame(columns=["name", "weather", "occasion", "clothing_items"])
-            st.session_state.outfits_df = outfits_df  
+if st.button("Save Changes to Clothing Items"):
+    st.session_state.df.to_csv(csv_file_path, sep=";", index=False)
+    st.success("Clothing items have been saved!")
 
+#------------------------
+# Create a new Outfit (with "Save" button)
+#------------------------
+st.write("#### Create a new Outfit")
 
-        selected_clothing_objects = [item for item in clothing_items_list if item.name in selected_items]
+# User input for outfit details
+outfit_name = st.text_input("Outfit Name:", value="My New Outfit")
+weather = st.multiselect("Weather:", ["<0", "0-12", "12-16", "16-20", "20-24", ">24"])
+occasion = st.multiselect("Occasion:", ["Casual", "Formal", "Business", "Party"])
 
-        clothing_items_str = ", ".join([item.name for item in selected_clothing_objects])
+# Convert st.session_state.df back to Clothing_Item objects
+clothing_items_list = [
+    Clothing_Item(
+        id=row["id"],
+        name=row["name"],
+        clothing_type=row["clothing_type"],
+        season=row["season"],
+        colour=row["colour"],
+        material=row["material"]
+    )
+    for _, row in st.session_state.df.iterrows()
+]
 
-        new_outfit = Outfit(
-            id=None,
-            name=outfit_name,
-            weather=weather,
-            occasion=occasion,
-            clothing_items=clothing_items_str
-        )
-        
-        new_outfit_dict = asdict(new_outfit)
-        new_outfit_df = pd.DataFrame([new_outfit_dict])
-        st.session_state.outfits_df = pd.concat([st.session_state.outfits_df, new_outfit_df], ignore_index=True)
-        
-        st.session_state.outfits_df.to_csv(csv_file_path_outfits, sep=";", index=False)
+# Select clothing items
+selected_items = st.multiselect(
+    "Select Clothing Items:",
+    options=[item.name for item in clothing_items_list],
+    default=[],
+)
 
-        st.success(f"Outfit '{outfit_name}' saved!")
+if st.button("Save Outfit") and outfit_name and selected_items:
+    if os.path.exists(csv_file_path_outfits):
+        outfits_df = pd.read_csv(csv_file_path_outfits, sep=";")
+        st.session_state.outfits_df = outfits_df
+    else:
+        outfits_df = pd.DataFrame(columns=["name", "weather", "occasion", "clothing_items"])
+        st.session_state.outfits_df = outfits_df
 
-if st.button("Delete or Change Outfits"):
+    selected_clothing_objects = [item for item in clothing_items_list if item.name in selected_items]
 
-    st.write("Delete or change outfits here:")
+    clothing_items_str = ", ".join([item.name for item in selected_clothing_objects])
 
-    edited_outfits = st.data_editor(st.session_state.outfits_df, num_rows='dynamic')
-    st.session_state.outfits_df = edited_outfits
+    new_outfit = Outfit(
+        id=None,
+        name=outfit_name,
+        weather=weather,
+        occasion=occasion,
+        clothing_items=clothing_items_str
+    )
+
+    new_outfit_dict = asdict(new_outfit)
+    new_outfit_df = pd.DataFrame([new_outfit_dict])
+    st.session_state.outfits_df = pd.concat([st.session_state.outfits_df, new_outfit_df], ignore_index=True)
+
     st.session_state.outfits_df.to_csv(csv_file_path_outfits, sep=";", index=False)
+
+    st.success(f"Outfit '{outfit_name}' saved!")
+
+#------------------------
+# Manage Outfits (Change/Delete) (with "Save" button)
+#------------------------
+st.write("#### Manage Outfits (Change/Delete)")
+
+edited_outfits = st.data_editor(st.session_state.outfits_df, num_rows='dynamic')
+st.session_state.outfits_df = edited_outfits
+
+if st.button("Save Changes to Outfits"):
+    st.session_state.outfits_df.to_csv(csv_file_path_outfits, sep=";", index=False)
+    st.success("Outfits have been saved!")
