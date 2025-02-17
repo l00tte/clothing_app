@@ -82,10 +82,10 @@ def load_data_from_csv(file_path, sep):
 
     return clothes
 
-clothes = load_data_from_csv("/Users/lottedieleman/projects/clothing_app/data/clothing_data.csv", sep=";")  
-csv_file_path = "/Users/lottedieleman/projects/clothing_app/data/clothing_data.csv"
-csv_file_path_outfits = "/Users/lottedieleman/projects/clothing_app/data/outfit_data.csv"
-csv_file_path_selected = "/Users/lottedieleman/projects/clothing_app/data/worn_outfits.csv"
+clothes = load_data_from_csv("data/clothing_data.csv", sep=";")  
+csv_file_path = "data/clothing_data.csv"
+csv_file_path_outfits = "data/outfit_data.csv"
+csv_file_path_selected = "data/worn_outfits.csv"
 
 import os
 import pandas as pd
