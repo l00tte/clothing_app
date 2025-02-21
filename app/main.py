@@ -7,60 +7,29 @@ import plotly.express as px
 import requests
 import random
 from datetime import datetime
+from streamlit_pills import pills
+from forecast import generate_forecast, generate_forecast_data
+from functions import categorise_temperature, clean_outfit_data, clean_list_string
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-#print(sys)
+
 from models import Clothing_Item, Outfit, OutfitSelection 
 
 st.set_page_config(page_title="Clothing Configurator")
 
 
-#----------------------------------------------------- weather API 
+#----------------------------------------------------- FORECAST
 
-api_key = "d8010fa049994fddab9160209251602"
-base_url = "http://api.weatherapi.com/v1/forecast.json?key=d8010fa049994fddab9160209251602&q=Berlin&days=5&aqi=no&alerts=no"
-
-response = requests.get(base_url)
-
-# Check if the request was successful (status code 200)
-if response.status_code == 200:
-    data = response.json()
-
-    
-    # Extract the min and max temperatures from the forecast data
-    forecast_day = data["forecast"]["forecastday"][0]["day"]
-    min_temp = forecast_day["mintemp_c"]
-    max_temp = forecast_day["maxtemp_c"]
-    current_temp = data["current"]["temp_c"]
-    feels_like_temp = data["current"]["feelslike_c"]
-
-    chance_of_rain = forecast_day["daily_will_it_rain"]
-
-    forecast_tomorrow = data["forecast"]["forecastday"][1]["day"]
-    
-    max_temp_tomorrow = forecast_tomorrow["maxtemp_c"]
-    print("tomorrow", max_temp_tomorrow)
-    min_temp_tomorrow = forecast_tomorrow["mintemp_c"]
-    chance_of_rain_tomorrow = forecast_tomorrow["daily_chance_of_rain"]
-
-    forecast_days = data.get("forecast", {}).get("forecastday", [])
-
-    forecast_next_5_days = {}
-
-    for i in range(1, min(6, len(forecast_days))):  # Start from index 1 to skip today
-        forecast_day = forecast_days[i]["day"]
-        date = forecast_days[i]["date"]
-        
-        forecast_next_5_days[date] = {
-            "max_temp": forecast_day["maxtemp_c"],
-            "min_temp": forecast_day["mintemp_c"],
-            "chance_of_rain": forecast_day["daily_chance_of_rain"],
-        }
-
-    
-    
-else:
-    print(f"Error: Unable to fetch data. Status code {response.status_code}")
+forecast_data = generate_forecast()
+min_temp = (forecast_data["min_temp"])
+max_temp = (forecast_data["max_temp"])
+current_temp = (forecast_data["current_temp"])
+feels_like_temp = (forecast_data["feels_like_temp"])
+chance_of_rain = (forecast_data["chance_of_rain"])
+min_temp_tomorrow = (forecast_data["min_temp_tomorrow"])
+max_temp_tomorrow = (forecast_data["max_temp_tomorrow"])
+chance_of_rain_tomorrow = (forecast_data["chance_of_rain_tomorrow"])
+forecast_next_5_days = (forecast_data["forecast_next_5_days"])
 
 
 #-----------------------------------------------------
@@ -119,7 +88,9 @@ if "df" not in st.session_state:
 
 def load_outfits():
     if os.path.exists(csv_file_path_outfits):
-        return pd.read_csv(csv_file_path_outfits, sep=";")
+        df = pd.read_csv(csv_file_path_outfits, sep=";")
+        cleaned_df = clean_outfit_data(df)
+        return cleaned_df
     else:
         return pd.DataFrame(columns=["id", "name", "weather", "occasion", "clothing_items"])
 
@@ -138,51 +109,31 @@ if "selection_df" not in st.session_state:
     selection_df = load_selection()
     st.session_state.selection_df = selection_df
 
-
-
-st.markdown(
-    """
-    <style>
-    .main {
-        background-color: #9bb5bf;  /* Change this to the color you want */
-    }
-    </style>
-    """, 
-    unsafe_allow_html=True
-)
-
+#------------------------
+# START LAYOUT 
+#------------------------
 st.image("./data/icon_clothing-projects.png", width=80)
 
 st.title("What to wear... what to wear?")
 
-st.markdown("#### Weather today:")
-st.write(f"❄️The minimum temperature is: {round(min_temp)}.")
-st.write(f"☀️The maximum temperature is: {round(max_temp)}.")
-st.write(f"🌡️The current temperature is {round(current_temp)} but real feel is {round(feels_like_temp)}.")
-st.write(f"🌧️Chance of rain: {chance_of_rain}")
+    #------------------------ Show weather of the day & tomorrow
 
-#------------------------
+col1, col2 = st.columns([1, 1])
+col1.markdown("#### Weather today:")
+col1.write(f"❄️ Minimum temperature is: {round(min_temp)}.")
+col1.write(f"☀️ Maximum temperature is: {round(max_temp)}.")
+col1.write(f"🌧️ Chance of rain: {chance_of_rain}")
+col1.write(f"🌡️ Current temperature is {round(current_temp)} but real feel is {round(feels_like_temp)}.")
 
-st.markdown("## Outfit Recommendations for this weather:")
+col2.markdown("#### Weather tomorrow:")
+col2.write(f"❄️ Minimum temperature is: {round(min_temp_tomorrow)}.")
+col2.write(f"☀️ Maximum temperature is: {round(max_temp_tomorrow)}.")
+col2.write(f"🌧️Chance of rain: {chance_of_rain_tomorrow}")
+col2.write(f"🌡️ Current temperature is {round(current_temp)} but real feel is {round(feels_like_temp)}.")
 
-max_temp_str = str(max_temp).replace("°C", "").strip()
-max_temp = float(max_temp_str)
-print("max temp", max_temp)
+    #------------------------ Outfit selection for today
 
-if max_temp < 0.0:
-    temp = "<0"
-elif 0 <= max_temp < 12:
-    temp = "0-12"
-elif 12 <= max_temp < 16:
-    temp = "12-16"
-elif 16 <= max_temp < 20:
-    temp = "16-20"
-elif 20 <= max_temp < 24:
-    temp = "20-24"
-else:
-    temp = ">24"
-
-
+temp = categorise_temperature(max_temp)
 
 outfit_options = st.session_state.outfits_df[st.session_state.outfits_df['weather'].apply(lambda x: temp in x)]
 
@@ -202,80 +153,85 @@ if "random_outfits_rows" not in st.session_state:
 # Retrieve the stored random outfits
 random_outfits_rows = st.session_state.random_outfits_rows
 
-# Display the outfits
-st.write("🎉 Randomly Selected Outfits for this weather:")
-for _, row in random_outfits_rows.iterrows():
-    # Clean weather and occasion for display
-    clean_weather = clean_list_string(str(row['weather']))
-    clean_occasion = clean_list_string(str(row['occasion']))
 
-    with st.expander(f"👕 {row['name']} ({clean_weather}, {clean_occasion})"):
-        st.write(f"**Clothing Items:** {row['clothing_items']}")
+col1.markdown("#### Today's Random Selection")
 
-#------------------------
-
-if st.button("Get outfit recommendations for tomorrow"):
-    st.markdown("## Outfit Recommendations for tomorrow:")
-    max_temp = max_temp_tomorrow
-    max_temp_str = str(max_temp).replace("°C", "").strip()
-    max_temp = float(max_temp_str)
-    print("max temp", max_temp)
-
-    if max_temp < 0.0:
-        temp = "<0"
-    elif 0 <= max_temp < 12:
-        temp = "0-12"
-    elif 12 <= max_temp < 16:
-        temp = "12-16"
-    elif 16 <= max_temp < 20:
-        temp = "16-20"
-    elif 20 <= max_temp < 24:
-        temp = "20-24"
-    else:
-        temp = ">24"
-
-
-
-    outfit_options = st.session_state.outfits_df[st.session_state.outfits_df['weather'].apply(lambda x: temp in x)]
-
-    def clean_list_string(value):
-        # Remove any square brackets, quotes, and extra spaces
-        return value.replace('[', '').replace(']', '').replace("'", "").strip()
-
-    if "random_outfits_rows" not in st.session_state:
-        # Filter outfits that match the selected weather range (temp)
-        outfit_options = st.session_state.outfits_df[st.session_state.outfits_df['weather'].apply(lambda x: temp in x)]
-
-        if not outfit_options.empty:
-            # Select 3 random outfit rows
-            random_outfits_rows = outfit_options.sample(3)
-            st.session_state.random_outfits_rows = random_outfits_rows  # Store them in session state
-
-    # Retrieve the stored random outfits
-    random_outfits_rows = st.session_state.random_outfits_rows
-
-    # Display the outfits
-    st.write("🎉 Randomly Selected Outfits for this weather:")
+with col1:
+    
     for _, row in random_outfits_rows.iterrows():
-        # Clean weather and occasion for display
         clean_weather = clean_list_string(str(row['weather']))
         clean_occasion = clean_list_string(str(row['occasion']))
 
-        with st.expander(f"👕 {row['name']} ({clean_weather}, {clean_occasion})"):
+        with st.expander(f"👕 {row['name']}"):
             st.write(f"**Clothing Items:** {row['clothing_items']}")
+            st.write(f"**Weather:** {clean_weather} °C")
+            st.write(f"**Occasion:** {clean_occasion}")
 
-#------------------------
+    #------------------------ Outfit selection for tomorrow
+
+temp = categorise_temperature(max_temp_tomorrow)
+
+
+outfit_options = st.session_state.outfits_df[st.session_state.outfits_df['weather'].apply(lambda x: temp in x)]
+
+def clean_list_string(value):
+
+        return value.replace('[', '').replace(']', '').replace("'", "").strip()
+
+if "random_outfits_rows" not in st.session_state:
+
+        outfit_options = st.session_state.outfits_df[st.session_state.outfits_df['weather'].apply(lambda x: temp in x)]
+
+if not outfit_options.empty:
+            random_outfits_rows = outfit_options.sample(3)
+            st.session_state.random_outfits_rows = random_outfits_rows  
+
+random_outfits_rows = st.session_state.random_outfits_rows
+
+col2.markdown("#### Tomorrow's Random Selection")
+
+with col2: 
+    for _, row in random_outfits_rows.iterrows():
+        clean_weather = clean_list_string(str(row['weather']))
+        clean_occasion = clean_list_string(str(row['occasion']))
+
+        with st.expander(f"👕 {row['name']}"):
+            st.write(f"**Clothing Items:** {row['clothing_items']}")
+            st.write(f"**Weather:** {clean_weather} °C")
+            st.write(f"**Occasion:** {clean_occasion}")
+
+
+
+    #------------------------ Outfit selection for next 5 days
 
 from datetime import datetime, timedelta
+import time
 
-if st.button("Get outfit recommendations for the next 5 days"):
-    st.markdown("## Outfit Recommendations for the next week:")
+st.markdown("### Generate random outfits")
+
+if st.button("Get Outfit Recommendations for the Next 5 Days"):
+    # Initialize the progress bar
+
+    col1, col2 = st.columns(2)
+    progress_bar = col1.progress(0)
+    status_text = st.empty()  # Placeholder for status message
+
+    # Simulate some work (e.g., data fetching, processing) with a loop
+    for i in range(100):
+        # Update the progress bar
+        progress_bar.progress(i + 1)
+        status_text.text(f"Loading... {i + 1}%")  # Update loading text
+        time.sleep(0.008)  # Simulate a delay
+
+    st.markdown("#### Outfit Recommendations for the next week:")
 
     today = datetime.today().date()
-    
-    forecast_next_5_days = data["forecast"]["forecastday"]  # Assuming this contains the next 5 days
 
-    for i in range(1, 6):  # Loop through the next 5 days
+    data = generate_forecast_data()
+    
+    forecast_next_5_days = data["forecast"]["forecastday"]  
+
+    for i in range(1, 7):  
         if i < len(forecast_next_5_days):  # Prevent IndexError
             forecast_day = forecast_next_5_days[i]
             target_date = datetime.strptime(forecast_day["date"], "%Y-%m-%d").date()
@@ -284,20 +240,7 @@ if st.button("Get outfit recommendations for the next 5 days"):
             temp_var_min = float(forecast_day["day"]["mintemp_c"])
             print(f"Max temp on {target_date}: {max_temp}")
 
-            # Temperature range classification
-            if max_temp < 0.0:
-                temp = "<0"
-            elif 0 <= max_temp < 12:
-                temp = "0-12"
-            elif 12 <= max_temp < 16:
-                temp = "12-16"
-            elif 16 <= max_temp < 20:
-                temp = "16-20"
-            elif 20 <= max_temp < 24:
-                temp = "20-24"
-            else:
-                temp = ">24"
-
+            temp = categorise_temperature(max_temp)
 
             def clean_list_string(value):
                 if isinstance(value, list):
@@ -313,133 +256,223 @@ if st.button("Get outfit recommendations for the next 5 days"):
                 (st.session_state.outfits_df["occasion"].apply(lambda x: "Business" in x))
             ]
 
-            # Function to clean list-like strings
             def clean_list_string(value):
                 return value.replace('[', '').replace(']', '').replace("'", "").strip()
 
             if not outfit_options.empty:
-                random_outfits_rows = outfit_options.sample(2)  # Pick 2 random outfits
-                st.session_state[f"random_outfits_{target_date}"] = random_outfits_rows  # Store in session state
+                random_outfits_rows = outfit_options.sample(2)  
+                st.session_state[f"random_outfits_{target_date}"] = random_outfits_rows 
 
-            # Retrieve stored outfits
+
             if f"random_outfits_{target_date}" in st.session_state:
                 random_outfits_rows = st.session_state[f"random_outfits_{target_date}"]
 
-                # Display outfits
-                formatted_date = target_date.strftime("%A, the %-d of %B")  # For Unix/Mac
-                # formatted_date = target_date.strftime("%A, the %#d of %B")  # Use this on Windows
 
-                st.write(f"Selected Outfits for **{formatted_date}**:")
-                st.write(f"Temperature will range from {round(temp_var_min)} to {round(max_temp)}°C")
+                formatted_date = target_date.strftime("%A, the %-d of %B")  
+
+                col1, col2 = st.columns(2)
+
+                col1.write(f"📆 Outfits for **{formatted_date}**:")
+                col2.write(f"🌡️ Temperature will range from {round(temp_var_min)} to {round(max_temp)}°C")
                 for _, row in random_outfits_rows.iterrows():
                     clean_weather = clean_list_string(str(row['weather']))
                     clean_occasion = clean_list_string(str(row['occasion']))
                     outfit_name = str(row['name'])
 
 
-                    with st.expander(f"👕 {row['name']} ({clean_weather}, {clean_occasion})"):
+                    with st.expander(f"👕 {row['name']}"):
                         st.write(f"**Clothing Items:** {row['clothing_items']}")
+                        st.write(f"**Weather:** {clean_weather} °C")
+                        st.write(f"**Occasion:** {clean_occasion}")
+
+
 
 #------------------------
 #------------------------
 
-st.write("### Browse more outfits...")
-
-#------------------------
-
-def reset_filters():
-    st.session_state.weather_filter = "All"
-    st.session_state.occasion_filter = "All"
-    st.session_state.clothing_filter = "All"
-
-# ---- RESET FILTERS BUTTON ----
-if st.button("Reset Filters"):
-    reset_filters()
-    st.rerun()  # Rerun the app to reset the filter states
-
-# ---- FILTERING OUTFITS BASED ON THE SELECTED FILTERS ----
-# Default values for filters if they don't exist in session state
-if 'weather_filter' not in st.session_state:
-    st.session_state.weather_filter = "All"
-if 'occasion_filter' not in st.session_state:
-    st.session_state.occasion_filter = "All"
-if 'clothing_filter' not in st.session_state:
-    st.session_state.clothing_filter = "All"
+col1, col2 = st.columns([2, 1])
 
 
-def get_unique_options(df, column_name):
-    # Split by comma, explode, strip, and remove square brackets
-    return df[column_name].dropna().astype(str) \
-        .str.replace(r'[\[\]\'"]', '', regex=True) \
-        .str.split(',') \
-        .explode() \
-        .str.strip() \
-        .unique()
+col1.markdown("<br><br>", unsafe_allow_html=True)
+col2.markdown("<br><br>", unsafe_allow_html=True)
+col1.markdown("### Browse more outfits here...")
 
-# Get unique weather options
-unique_weather = get_unique_options(st.session_state.outfits_df, "weather")
+#------------------------ Filter outfits and display outfits that match selections
 
-# Get unique occasion options
-unique_occasion = get_unique_options(st.session_state.outfits_df, "occasion")
+df_full = st.session_state.outfits_df
 
+# --- Initialize Filter Selections ---
+if "weather_sel" not in st.session_state:
+    st.session_state.weather_sel = "All"
+if "occasion_sel" not in st.session_state:
+    st.session_state.occasion_sel = "All"
+if "clothing_sel" not in st.session_state:
+    st.session_state.clothing_sel = "All"
+
+# --- Helper Functions ---
+
+def get_exploded_options(df, column, other_filters):
+    """
+    Returns the unique individual options for a column that might have comma-separated lists,
+    after applying the provided filters (other_filters).
+    """
+    filtered = df.copy()
+    # Apply each filter in other_filters
+    for col, value in other_filters.items():
+        if value != "All":
+            if col == "clothing_items":
+                filtered = filtered[filtered[col].str.contains(value, case=False, na=False)]
+            else:
+                filtered = filtered[filtered[col] == value]
+    # Explode the values by splitting on comma
+    options = (filtered[column]
+               .dropna()
+               .astype(str)
+               .str.split(',')
+               .explode()
+               .str.strip()
+               .unique())
+    return sorted(options)
+
+def get_options(df, column, other_filters):
+    """
+    Returns the unique options for a column (assumed not to contain lists)
+    after applying filters from other_filters.
+    """
+    filtered = df.copy()
+    for col, value in other_filters.items():
+        if value != "All":
+            if col == "clothing_items":
+                filtered = filtered[filtered[col].str.contains(value, case=False, na=False)]
+            else:
+                filtered = filtered[filtered[col] == value]
+    options = filtered[column].dropna().unique()
+    return sorted(options)
+
+def get_clothing_options(df, other_filters):
+    """
+    Returns the unique individual clothing items from the 'clothing_items' column
+    after applying filters from other_filters (except clothing itself).
+    """
+    filtered = df.copy()
+    for col, value in other_filters.items():
+        if value != "All" and col != "clothing_items":
+            filtered = filtered[filtered[col] == value]
+    items = (filtered["clothing_items"]
+             .dropna()
+             .astype(str)
+             .str.split(',')
+             .explode()
+             .str.strip()
+             .unique())
+    return sorted(items)
+
+# --- Reset Filters Button ---
+if col2.button("Reset Filters"):
+    st.session_state.weather_sel = "All"
+    st.session_state.occasion_sel = "All"
+    st.session_state.clothing_sel = "All"
+    st.rerun()
+
+# --- Define Emoji Dictionaries for Pills ---
+weather_emojis = {
+    "All": "🤷‍♀️",
+    "16-20": "🌤️",
+    "12-16": "⛅️",
+    "<0": "❄️",  
+    "0-12": "🌥️",  
+    "20-24": "☀️", 
+    ">24": "🔥"
+}
+occasion_emojis = {
+    "All": "🤷‍♀️",
+    "Party": "💃",
+    "Business": "👔",
+    "Casual": "👕",
+    "Formal": "👠"
+}
+
+# --- Compute Dynamic Options Sequentially ---
+
+# 1. Compute weather options by exploding the weather column.
+weather_options = ["All"] + get_exploded_options(df_full, "weather", {
+    "occasion": st.session_state.occasion_sel,
+    "clothing_items": st.session_state.clothing_sel
+})
+# If the current weather selection isn’t valid anymore, reset to "All"
+if st.session_state.weather_sel not in weather_options:
+    st.session_state.weather_sel = "All"
+
+# --- Weather Widget ---
 col1, col2, col3 = st.columns(3)
-# Weather filter in the first column
 with col1:
-    weather_filter = st.selectbox(
-        "Select Weather",
-        options=["All"] + [str(item) for item in unique_weather],  # Ensure proper formatting
-        index=0
+    weather_pill = pills(
+        "Select Temperature",
+        options=[f"{weather_emojis.get(opt, '❓')} {opt}" for opt in weather_options],
+        index=weather_options.index(st.session_state.weather_sel)
     )
+    # Remove emoji prefix and update state
+    st.session_state.weather_sel = weather_pill.split(" ", 1)[-1] if " " in weather_pill else weather_pill
 
-# Occasion filter in the second column
+# 2. Now compute occasion options using updated weather and current clothing.
+occasion_options = ["All"] + get_options(df_full, "occasion", {
+    "weather": st.session_state.weather_sel,
+    "clothing_items": st.session_state.clothing_sel
+})
+if st.session_state.occasion_sel not in occasion_options:
+    st.session_state.occasion_sel = "All"
+
 with col2:
-    occasion_filter = st.selectbox(
+    occasion_pill = pills(
         "Select Occasion",
-        options=["All"] + [str(item) for item in unique_occasion],  # Ensure proper formatting
-        index=0
+        options=[f"{occasion_emojis.get(opt, '❓')} {opt}" for opt in occasion_options],
+        index=occasion_options.index(st.session_state.occasion_sel)
     )
+    st.session_state.occasion_sel = occasion_pill.split(" ", 1)[-1] if " " in occasion_pill else occasion_pill
 
-clothing_items_list = st.session_state.outfits_df["clothing_items"].dropna().astype(str) \
-    .str.split(',') \
-    .explode() \
-    .str.strip() \
-    .unique()
+# 3. Finally, compute clothing options using updated weather and occasion.
+clothing_options = ["All"] + get_clothing_options(df_full, {
+    "weather": st.session_state.weather_sel,
+    "occasion": st.session_state.occasion_sel
+})
+if st.session_state.clothing_sel not in clothing_options:
+    st.session_state.clothing_sel = "All"
 
 with col3:
-# Add 'All' option to the beginning of the list
-    clothing_filter = st.selectbox(
-        "Select clothing item",
-        options=["All"] + list(clothing_items_list),  # Convert to list and pass to the selectbox
-        index=0
+    st.session_state.clothing_sel = st.selectbox(
+        "Select Clothing Item",
+        options=clothing_options,
+        index=clothing_options.index(st.session_state.clothing_sel)
     )
 
+# --- Apply All Filters to the DataFrame ---
+filtered_outfits = df_full.copy()
 
-
-# Apply filters to dataframe
-filtered_outfits = st.session_state.outfits_df.copy()
-
-# Filter based on the weather
-if weather_filter != "All":
-    filtered_outfits = filtered_outfits[filtered_outfits["weather"] == weather_filter]
-
-# Filter based on the occasion
-if occasion_filter != "All":
-    filtered_outfits = filtered_outfits[filtered_outfits["occasion"] == occasion_filter]
-
-if clothing_filter:
-    # Ensure all clothing items are strings and handle NaN by replacing them with an empty string
-    filtered_outfits['clothing_items'] = filtered_outfits['clothing_items'].fillna('').astype(str)
-
-    # Create a new column that holds the list of clothing items as individual items
-    filtered_outfits['clothing_items_list'] = filtered_outfits['clothing_items'].apply(lambda x: [item.strip() for item in x.split(',')] if x else [])
-
-    # Apply the filter: for each row, check if the clothing filter matches any item in the clothing_items_list
-    filtered_outfits = filtered_outfits[filtered_outfits['clothing_items_list'].apply(
-        lambda items: any(clothing_filter.lower() in item.lower() for item in items))
+# For weather, filter rows where the exploded weather values contain the selection.
+if st.session_state.weather_sel != "All":
+    filtered_outfits = filtered_outfits[
+        filtered_outfits["weather"]
+        .astype(str)
+        .str.split(',')
+        .apply(lambda items: st.session_state.weather_sel in [i.strip() for i in items])
     ]
 
+if st.session_state.occasion_sel != "All":
+    filtered_outfits = filtered_outfits[filtered_outfits["occasion"] == st.session_state.occasion_sel]
+
+if st.session_state.clothing_sel != "All":
+    filtered_outfits = filtered_outfits[
+        filtered_outfits["clothing_items"].str.contains(st.session_state.clothing_sel, case=False, na=False)
+    ]
+
+#st.write("### Filtered Outfits", filtered_outfits)
+
+
+
+#-----------------------------------------
+
 # ---- DISPLAY FILTERED OUTFITS AS CARDS ----
-st.markdown("### 🛍️Outfit Options")
+st.markdown("##### Outfits that match your selection:", len(filtered_outfits))
 
 def clean_list_string(value):
     # Remove any square brackets, quotes, and extra spaces
@@ -452,49 +485,63 @@ else:
         # Retrieve just the outfit name from the row
         outfit_name = str(row['name'])
 
+        col1, col2, col3 = st.columns([0.5, 4, 0.5])
         # Display outfit with a button to select
-        with st.expander(f"👕 {outfit_name}"):
-            st.write(f"**Clothing Items:** {row['clothing_items']}")
-            
-           # if st.button(f"Select this Outfit for today"):
-           #     # Create an OutfitSelection object with the name and current date
-            #    outfit = OutfitSelection(name=outfit_name, date_selected=None)
-                
-                # Log the outfit selection
-            #    log_outfit_selection(outfit)
-             #   st.success(f"Outfit '{outfit_name}' selected for today!")
-
+        with col2:
+            with st.expander(f"👕 {row['name']}"):
+                st.write(f"**Clothing Items:** {row['clothing_items']}")
+                st.write(f"**Weather:** {clean_weather} °C")
+                st.write(f"**Occasion:** {clean_occasion}")
 
 
 # ---- DASHBOARD METRICS ----
-st.markdown("### 👗Outfits in Numbers")
 
-# Columns for KPIs
-col1, col2 = st.columns(2)
 
-# Total outfits
-col1.metric("Total Outfits", len(st.session_state.outfits_df))
-
-# Number of filtered outfits
-col2.metric("Matching Outfits", len(filtered_outfits))
 
 # ---- CHARTS ----
-if st.button("Show Outfit metrics"):
-    st.subheader("📊 Outfit Distribution")
 
-    if not st.session_state.outfits_df.empty:
-        # Pie chart for occasions
-        fig1 = px.pie(st.session_state.outfits_df, names="occasion", title="Outfits by Occasion")
-        st.plotly_chart(fig1, use_container_width=True)
+st.markdown(" ## 👗 Outits in Numbers")
+        # Columns for KPIs
+col1, col2 = st.columns(2)
 
-        # Bar chart for weather distribution
-        fig2 = px.pie(st.session_state.outfits_df, names="weather", title="Outfits by Weather")
-        st.plotly_chart(fig2, use_container_width=True)
-    else:
-        st.info("No outfit data available to display charts.")
+    # Total outfits
+col1.metric("Total Outfits", len(st.session_state.outfits_df))
+
+    # Number of filtered outfits
+col2.metric("Total Clothing Items", len(st.session_state.df))
+
+
+if st.button("Show More Outfit metrics"):
+
+
+    col1, col2 = st.columns(2)
+    progress_bar = col1.progress(0)
+    status_text = st.empty()  # Placeholder for status message
+
+    # Simulate some work (e.g., data fetching, processing) with a loop
+    for i in range(100):
+        # Update the progress bar
+        progress_bar.progress(i + 1)
+        status_text.text(f"Calculating Metrics... {i + 1}%")  # Update loading text
+        time.sleep(0.008)  # Simulate a delay
+
+    with st.expander("📊 Outfit Distribution"):
+
+        if not st.session_state.outfits_df.empty:
+            # Pie chart for occasions
+            fig1 = px.pie(st.session_state.outfits_df, names="occasion", title="Outfits by Occasion")
+            st.plotly_chart(fig1, use_container_width=True)
+
+            # Bar chart for weather distribution
+            fig2 = px.pie(st.session_state.outfits_df, names="weather", title="Outfits by Weather")
+            st.plotly_chart(fig2, use_container_width=True)
+        else:
+            st.info("No outfit data available to display charts.")
 
 
 #------------------------
+st.markdown("<br><br>", unsafe_allow_html=True)
+st.markdown("----------------------------------------------------")
 st.markdown("### Manage Items and Outfits")
 #------------------------
 if "df" not in st.session_state:
