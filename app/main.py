@@ -11,6 +11,7 @@ from datetime import datetime
 from streamlit_pills import pills
 from forecast import generate_forecast, generate_forecast_data
 from functions import categorise_temperature, clean_outfit_data, clean_list_string
+import lib_plotly as lb
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -81,7 +82,7 @@ st.session_state.setdefault("selection_df", load_csv_file(CSV_SELECTIONS, ["date
 #-------------------------- 
 st.image("./data/icon_clothing-projects.png", width=80)
 
-st.title("What to wear... what to wear?")
+st.title("🦕What to wear... what to wear?")
 
     #------------------------ Show weather of the day & tomorrow
 
@@ -284,6 +285,7 @@ def get_exploded_options(df, column, other_filters):
             if col == "clothing_items":
                 filtered = filtered[filtered[col].str.contains(value, case=False, na=False)]
             else:
+                # For columns that might be comma-separated, we don't do exploding here.
                 filtered = filtered[filtered[col] == value]
     # Explode the values by splitting on comma
     options = (filtered[column]
@@ -375,8 +377,8 @@ with col1:
     # Remove emoji prefix and update state
     st.session_state.weather_sel = weather_pill.split(" ", 1)[-1] if " " in weather_pill else weather_pill
 
-# 2. Now compute occasion options using updated weather and current clothing.
-occasion_options = ["All"] + get_options(df_full, "occasion", {
+# 2. Now compute occasion options using the exploded approach.
+occasion_options = ["All"] + get_exploded_options(df_full, "occasion", {
     "weather": st.session_state.weather_sel,
     "clothing_items": st.session_state.clothing_sel
 })
@@ -409,7 +411,7 @@ with col3:
 # --- Apply All Filters to the DataFrame ---
 filtered_outfits = df_full.copy()
 
-# For weather, filter rows where the exploded weather values contain the selection.
+# Filter by weather (assuming weather values are comma-separated)
 if st.session_state.weather_sel != "All":
     filtered_outfits = filtered_outfits[
         filtered_outfits["weather"]
@@ -418,13 +420,18 @@ if st.session_state.weather_sel != "All":
         .apply(lambda items: st.session_state.weather_sel in [i.strip() for i in items])
     ]
 
+# Filter by occasion using str.contains
 if st.session_state.occasion_sel != "All":
-    filtered_outfits = filtered_outfits[filtered_outfits["occasion"] == st.session_state.occasion_sel]
+    filtered_outfits = filtered_outfits[
+        filtered_outfits["occasion"].str.contains(st.session_state.occasion_sel, case=False, na=False)
+    ]
 
+# Filter by clothing items using case-insensitive matching.
 if st.session_state.clothing_sel != "All":
     filtered_outfits = filtered_outfits[
         filtered_outfits["clothing_items"].str.contains(st.session_state.clothing_sel, case=False, na=False)
     ]
+
 
 #st.write("### Filtered Outfits", filtered_outfits)
 
@@ -433,7 +440,13 @@ if st.session_state.clothing_sel != "All":
 #-----------------------------------------
 
 # ---- DISPLAY FILTERED OUTFITS AS CARDS ----
-st.markdown("##### Outfits that match your selection:", len(filtered_outfits))
+st.markdown(f"##### Outfits that match your selection: {len(filtered_outfits)}")
+
+max_display = 5
+
+# Filter the outfits that are to be shown initially (first 5)
+outfits_to_display = filtered_outfits.head(max_display)
+
 
 def clean_list_string(value):
     # Remove any square brackets, quotes, and extra spaces
@@ -442,35 +455,56 @@ def clean_list_string(value):
 if filtered_outfits.empty:
     st.warning("No outfits match the selected filters.")
 else:
-    for _, row in filtered_outfits.iterrows():
-        # Retrieve just the outfit name from the row
+    for _, row in outfits_to_display.iterrows():
         outfit_name = str(row['name'])
+        # Clean the weather and occasion values from the row
+        clean_weather = clean_list_string(str(row['weather']))
+        clean_occasion = clean_list_string(str(row['occasion']))
 
         col1, col2, col3 = st.columns([0.5, 4, 0.5])
-        # Display outfit with a button to select
         with col2:
-            with st.expander(f"👕 {row['name']}"):
+            with st.expander(f"👕 {outfit_name}"):
                 st.write(f"**Clothing Items:** {row['clothing_items']}")
                 st.write(f"**Weather:** {clean_weather} °C")
                 st.write(f"**Occasion:** {clean_occasion}")
+if len(filtered_outfits) > max_display:
+        if st.button("Show all Outfits that match your selection"):
+            # Show all remaining outfits
+            for _, row in filtered_outfits.iloc[max_display:].iterrows():
+                outfit_name = str(row['name'])
+                clean_weather = clean_list_string(str(row['weather']))
+                clean_occasion = clean_list_string(str(row['occasion']))
 
+                col1, col2, col3 = st.columns([0.5, 4, 0.5])
+                with col2:
+                    with st.expander(f"👕 {outfit_name}"):
+                        st.write(f"**Clothing Items:** {row['clothing_items']}")
+                        st.write(f"**Weather:** {clean_weather} °C")
+                        st.write(f"**Occasion:** {clean_occasion}")
 
 # ---- DASHBOARD METRICS ----
 
 
 
 # ---- CHARTS ----
+default_theme = lb.theme.get_default_theme()
+
+
 
 st.markdown(" ## 👗 Outits in Numbers")
         # Columns for KPIs
-col1, col2 = st.columns(2)
+col1, col2, col3= st.columns(3)
 
-    # Total outfits
-col1.metric("Total Outfits", len(st.session_state.outfits_df))
+total_outfits = len(st.session_state.outfits_df)
+total_items = len(st.session_state.df)
+
+
+col1.metric("Total Outfits", f"👕    {total_outfits}", border=True)
 
     # Number of filtered outfits
-col2.metric("Total Clothing Items", len(st.session_state.df))
+col2.metric("Total Clothing Items", f"👖    {total_items}", border=True)
 
+col3.metric("Total items without an outfit:", "placeholder", border=True)
 
 if st.button("Show More Outfit metrics"):
 
@@ -489,16 +523,54 @@ if st.button("Show More Outfit metrics"):
     with st.expander("📊 Outfit Distribution"):
 
         if not st.session_state.outfits_df.empty:
-            # Pie chart for occasions
-            fig1 = px.pie(st.session_state.outfits_df, names="occasion", title="Outfits by Occasion")
+            outfits_df = st.session_state.outfits_df.copy()
+
+            # Fill NaN in 'occasion' and 'weather' with empty string
+            outfits_df['occasion'] = outfits_df['occasion'].fillna('')
+            outfits_df['weather'] = outfits_df['weather'].fillna('')
+
+            # Step 1: Split and explode 'occasion' by commas
+            outfits_df_exploded = outfits_df.assign(occasion=outfits_df['occasion'].str.split(',')).explode('occasion')
+            # Step 2: Split and explode 'weather' by commas
+            outfits_df_exploded = outfits_df_exploded.assign(weather=outfits_df_exploded['weather'].str.split(',')).explode('weather')
+
+            # Step 3: Clean up the values (remove extra spaces)
+            outfits_df_exploded['occasion'] = outfits_df_exploded['occasion'].str.strip()
+            outfits_df_exploded['weather'] = outfits_df_exploded['weather'].str.strip()
+
+            print(outfits_df_exploded['occasion'].unique())
+            # Debugging: print columns of the exploded DataFrame
+            print("Columns in outfits_df_exploded:", outfits_df_exploded.columns)
+
+
+            # Step 4: Update session state with the exploded DataFrame
+            st.session_state.outfits_df_exploded = outfits_df_exploded
+
+            #occasion_order = {"occasion":["Business", "Casual", "Party", "Formal"]}
+            #weather_order = {"weather":["<0", "0-12", "12-16", "16-20", "24-24", ">24"]}
+            occasion_order = {"occasion": tuple(["Business", "Casual", "Party", "Formal"])}
+
+                    # Pie chart for occasions
+            fig1 = px.pie(outfits_df_exploded, names="occasion", title="Outfits by Occasion",
+                           color_discrete_sequence=default_theme["colorway"])
+            fig1.update_layout(**default_theme)
+            fig1.update_layout(paper_bgcolor= "rgba(0,0,0,0)") # overwrite library background color 
+            fig1.update_traces(textinfo='percent+value')  
+
             st.plotly_chart(fig1, use_container_width=True)
 
             # Bar chart for weather distribution
-            fig2 = px.pie(st.session_state.outfits_df, names="weather", title="Outfits by Weather")
+            fig2 = px.pie(outfits_df_exploded, names="weather", title="Outfits by Weather", color_discrete_sequence=default_theme["colorway"])
+            fig2.update_layout(**default_theme)
+            fig2.update_layout(paper_bgcolor= "rgba(0,0,0,0)") # overwrite library background color 
+            fig2.update_traces(textinfo='percent+value')  
+
             st.plotly_chart(fig2, use_container_width=True)
         else:
             st.info("No outfit data available to display charts.")
-
+    
+    with st.expander("📈 Show Top & Bottom 10 Clothing Items:"):
+            st.write("placeholder") 
 
 #------------------------
 st.markdown("<br><br>", unsafe_allow_html=True)
@@ -544,7 +616,7 @@ if st.button("Save new clothing item") and name and type and season and colour a
     new_item_dict = asdict(new_item)
     new_item_df = pd.DataFrame([new_item_dict])
     st.session_state.df = pd.concat([st.session_state.df, new_item_df], ignore_index=True)
-    st.session_state.df.to_csv(csv_file_path, sep=";", index=False)
+    st.session_state.df.to_csv(CSV_CLOTHING, sep=";", index=False)
 
     st.success(f"New clothing item '{name}' added!")
 
@@ -558,7 +630,7 @@ edited_df = st.data_editor(st.session_state.df, num_rows="dynamic")
 st.session_state.df = edited_df
 
 if st.button("Save Changes to Clothing Items"):
-    st.session_state.df.to_csv(csv_file_path, sep=";", index=False)
+    st.session_state.df.to_csv(CSV_CLOTHING, sep=";", index=False)
     st.success("Clothing items have been saved!")
 
 #------------------------
@@ -592,8 +664,8 @@ selected_items = st.multiselect(
 )
 
 if st.button("Save Outfit") and outfit_name and selected_items:
-    if os.path.exists(csv_file_path_outfits):
-        outfits_df = pd.read_csv(csv_file_path_outfits, sep=";")
+    if os.path.exists(CSV_OUTFITS):
+        outfits_df = pd.read_csv(CSV_OUTFITS, sep=";")
         st.session_state.outfits_df = outfits_df
     else:
         outfits_df = pd.DataFrame(columns=["name", "weather", "occasion", "clothing_items"])
@@ -615,7 +687,7 @@ if st.button("Save Outfit") and outfit_name and selected_items:
     new_outfit_df = pd.DataFrame([new_outfit_dict])
     st.session_state.outfits_df = pd.concat([st.session_state.outfits_df, new_outfit_df], ignore_index=True)
 
-    st.session_state.outfits_df.to_csv(csv_file_path_outfits, sep=";", index=False)
+    st.session_state.outfits_df.to_csv(CSV_OUTFITS, sep=";", index=False)
 
     st.success(f"Outfit '{outfit_name}' saved!")
 
@@ -628,5 +700,5 @@ edited_outfits = st.data_editor(st.session_state.outfits_df, num_rows='dynamic')
 st.session_state.outfits_df = edited_outfits
 
 if st.button("Save Changes to Outfits"):
-    st.session_state.outfits_df.to_csv(csv_file_path_outfits, sep=";", index=False)
+    st.session_state.outfits_df.to_csv(CSV_OUTFITS, sep=";", index=False)
     st.success("Outfits have been saved!")
