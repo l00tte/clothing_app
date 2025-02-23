@@ -174,7 +174,7 @@ import time
 
 st.markdown("### Generate random outfits")
 
-if st.button("Get Outfit Recommendations for the Next 5 Days"):
+if st.button("Get Outfit Recommendations for the Next Days"):
 
     col1, col2 = st.columns(2)
     progress_bar = col1.progress(0)
