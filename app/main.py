@@ -1,3 +1,4 @@
+#-------------------------- import libraries and functions
 import pandas as pd
 import streamlit as st
 import sys
@@ -15,10 +16,11 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from models import Clothing_Item, Outfit, OutfitSelection 
 
+# set page config # needs to be first st element
 st.set_page_config(page_title="Clothing Configurator")
 
 
-#----------------------------------------------------- FORECAST
+#-------------------------- import forecast variables from forecast.py
 
 forecast_data = generate_forecast()
 min_temp = (forecast_data["min_temp"])
@@ -32,14 +34,17 @@ chance_of_rain_tomorrow = (forecast_data["chance_of_rain_tomorrow"])
 forecast_next_5_days = (forecast_data["forecast_next_5_days"])
 
 
-#-----------------------------------------------------
+#-------------------------- load and intitialise outfit and clothing data
 
+# File paths
+CSV_CLOTHING = "data/clothing_data.csv"
+CSV_OUTFITS = "data/outfit_data.csv"
+CSV_SELECTIONS = "data/worn_outfits.csv"
 
-def load_data_from_csv(file_path, sep):
+def load_data_from_csv(file_path, sep=";"):
     df = pd.read_csv(file_path, sep=sep)
-    clothes = []
-    for _, row in df.iterrows():
-        clothing_item = Clothing_Item(
+    return [
+        Clothing_Item(
             id=None,  
             name=row["name"], 
             clothing_type=row["clothing_type"], 
@@ -47,71 +52,33 @@ def load_data_from_csv(file_path, sep):
             colour=row["colour"], 
             material=row["material"]
         )  
-        clothes.append(clothing_item)
+        for _, row in df.iterrows()
+    ]
 
-    return clothes
+# Load CSV with default columns if missing
+def load_csv_file(file_path, default_columns, sep=";", clean_data=False):
+    if os.path.exists(file_path):
+        df = pd.read_csv(file_path, sep=sep)
+        return clean_outfit_data(df) if clean_data else df
+    return pd.DataFrame(columns=default_columns)
 
-clothes = load_data_from_csv("data/clothing_data.csv", sep=";")  
-csv_file_path = "data/clothing_data.csv"
-csv_file_path_outfits = "data/outfit_data.csv"
-csv_file_path_selected = "data/worn_outfits.csv"
-
-import os
-import pandas as pd
-
-# Log outfit selection by saving to a CSV file
+# Log outfit selection
 def log_outfit_selection(outfit: OutfitSelection):
-    # Path to log file
-    log_file = csv_file_path_selected
-    
-    # Check if the log file exists, if not create it with headers
-    if os.path.exists(log_file):
-        log_df = pd.read_csv(log_file)
-    else:
-        log_df = pd.DataFrame(columns=["outfit_name", "date_selected"])
-    
-    # Append new log entry
-    new_log_entry = pd.DataFrame([{"outfit_name": outfit.name, "date_selected": outfit.date_selected}])
+    new_entry = pd.DataFrame([{"outfit_name": outfit.name, "date_selected": outfit.date_selected}])
+    new_entry.to_csv(CSV_SELECTIONS, mode="a", header=not os.path.exists(CSV_SELECTIONS), index=False)
 
-    # Concatenate the existing log_df with the new entry
-    log_df = pd.concat([log_df, new_log_entry], ignore_index=True)
-    
-    # Save the updated log to CSV
-    log_df.to_csv(log_file, index=False)
-
-    
+# Load clothing data
+clothes = load_data_from_csv(CSV_CLOTHING)
 df = pd.DataFrame([asdict(clothing_item) for clothing_item in clothes])
 
-
-if "df" not in st.session_state:
-    st.session_state.df = df
-
-def load_outfits():
-    if os.path.exists(csv_file_path_outfits):
-        df = pd.read_csv(csv_file_path_outfits, sep=";")
-        cleaned_df = clean_outfit_data(df)
-        return cleaned_df
-    else:
-        return pd.DataFrame(columns=["id", "name", "weather", "occasion", "clothing_items"])
-
-def load_selection():
-    if os.path.exists(csv_file_path_selected):
-        return pd.read_csv(csv_file_path_selected, sep=";")
-    else:
-        return pd.DataFrame(columns=["date","outfit"])
-
 # Initialize session state
-if "outfits_df" not in st.session_state:
-    outfits_df = load_outfits()
-    st.session_state.outfits_df = outfits_df
+st.session_state.setdefault("df", df)
+st.session_state.setdefault("outfits_df", load_csv_file(CSV_OUTFITS, ["id", "name", "weather", "occasion", "clothing_items"], clean_data=True))
+st.session_state.setdefault("selection_df", load_csv_file(CSV_SELECTIONS, ["date", "outfit"]))
 
-if "selection_df" not in st.session_state:
-    selection_df = load_selection()
-    st.session_state.selection_df = selection_df
-
-#------------------------
-# START LAYOUT 
-#------------------------
+#-------------------------- 
+                            # START LAYOUT 
+#-------------------------- 
 st.image("./data/icon_clothing-projects.png", width=80)
 
 st.title("What to wear... what to wear?")
@@ -138,19 +105,16 @@ temp = categorise_temperature(max_temp)
 outfit_options = st.session_state.outfits_df[st.session_state.outfits_df['weather'].apply(lambda x: temp in x)]
 
 def clean_list_string(value):
-    # Remove any square brackets, quotes, and extra spaces
     return value.replace('[', '').replace(']', '').replace("'", "").strip()
 
 if "random_outfits_rows" not in st.session_state:
-    # Filter outfits that match the selected weather range (temp)
     outfit_options = st.session_state.outfits_df[st.session_state.outfits_df['weather'].apply(lambda x: temp in x)]
 
-    if not outfit_options.empty:
-        # Select 3 random outfit rows
-        random_outfits_rows = outfit_options.sample(3)
-        st.session_state.random_outfits_rows = random_outfits_rows  # Store them in session state
+if not outfit_options.empty:
+    sample_size = min(3, len(outfit_options))  # Ensure we don't sample more than available rows
+    random_outfits_rows = outfit_options.sample(sample_size)
+    st.session_state.random_outfits_rows = random_outfits_rows 
 
-# Retrieve the stored random outfits
 random_outfits_rows = st.session_state.random_outfits_rows
 
 
@@ -183,8 +147,9 @@ if "random_outfits_rows" not in st.session_state:
         outfit_options = st.session_state.outfits_df[st.session_state.outfits_df['weather'].apply(lambda x: temp in x)]
 
 if not outfit_options.empty:
-            random_outfits_rows = outfit_options.sample(3)
-            st.session_state.random_outfits_rows = random_outfits_rows  
+    sample_size = min(3, len(outfit_options))  # Ensure we don't sample more than available rows
+    random_outfits_rows = outfit_options.sample(sample_size)
+    st.session_state.random_outfits_rows = random_outfits_rows 
 
 random_outfits_rows = st.session_state.random_outfits_rows
 
@@ -210,17 +175,14 @@ import time
 st.markdown("### Generate random outfits")
 
 if st.button("Get Outfit Recommendations for the Next 5 Days"):
-    # Initialize the progress bar
 
     col1, col2 = st.columns(2)
     progress_bar = col1.progress(0)
-    status_text = st.empty()  # Placeholder for status message
+    status_text = st.empty() 
 
-    # Simulate some work (e.g., data fetching, processing) with a loop
     for i in range(100):
-        # Update the progress bar
         progress_bar.progress(i + 1)
-        status_text.text(f"Loading... {i + 1}%")  # Update loading text
+        status_text.text(f"Loading... {i + 1}%")  
         time.sleep(0.008)  # Simulate a delay
 
     st.markdown("#### Outfit Recommendations for the next week:")
@@ -232,7 +194,7 @@ if st.button("Get Outfit Recommendations for the Next 5 Days"):
     forecast_next_5_days = data["forecast"]["forecastday"]  
 
     for i in range(1, 7):  
-        if i < len(forecast_next_5_days):  # Prevent IndexError
+        if i < len(forecast_next_5_days): 
             forecast_day = forecast_next_5_days[i]
             target_date = datetime.strptime(forecast_day["date"], "%Y-%m-%d").date()
             
@@ -284,7 +246,6 @@ if st.button("Get Outfit Recommendations for the Next 5 Days"):
                         st.write(f"**Clothing Items:** {row['clothing_items']}")
                         st.write(f"**Weather:** {clean_weather} °C")
                         st.write(f"**Occasion:** {clean_occasion}")
-
 
 
 #------------------------
